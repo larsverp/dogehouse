@@ -4,6 +4,10 @@ defmodule Kousa do
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
 
+    Kousa.Metric.PrometheusExporter.setup()
+    Kousa.Metric.PipelineInstrumenter.setup()
+    Kousa.Metric.UserSessions.setup()
+
     children = [
       {
         GenRegistry,
@@ -13,9 +17,22 @@ defmodule Kousa do
         GenRegistry,
         worker_module: Kousa.Gen.RoomSession
       },
+      {
+        GenRegistry,
+        worker_module: Kousa.Gen.RoomChat
+      },
+      {
+        GenRegistry,
+        worker_module: Kousa.Gen.VoiceRabbit
+      },
+      {
+        GenRegistry,
+        worker_module: Kousa.Gen.VoiceOnlineRabbit
+      },
       {Beef.Repo, []},
-      Kousa.Gen.Rabbit,
-      Kousa.Gen.OnlineRabbit,
+      Kousa.Gen.StartRabbits,
+      Kousa.Gen.StartRooms,
+      Kousa.Gen.Telemetry,
       Plug.Cowboy.child_spec(
         scheme: :http,
         plug: Kousa.Router,
